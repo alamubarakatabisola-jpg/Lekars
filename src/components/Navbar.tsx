@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Wrench, MessageSquare, ShieldCheck } from 'lucide-react';
+import { ShoppingCart, Menu, X, Wrench, MessageSquare } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { businessConfig } from '../config/businessConfig';
 import { generateWhatsAppLink } from '../utils/whatsapp';
@@ -17,7 +17,6 @@ export const Navbar: React.FC = () => {
     { name: 'Services', path: '/services' },
     { name: 'Shop', path: '/shop' },
     { name: 'Contact', path: '/contact' },
-    { name: 'Admin', path: '/admin' },
   ];
 
   const defaultWhatsAppUrl = generateWhatsAppLink(
@@ -50,7 +49,7 @@ export const Navbar: React.FC = () => {
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
             {navLinks.map((link) => (
-              <NavLink
+            <NavLink
                 key={link.path}
                 to={link.path}
                 className={({ isActive }) =>
@@ -58,10 +57,9 @@ export const Navbar: React.FC = () => {
                     isActive
                       ? 'text-blue-400 bg-slate-900 border-b-2 border-blue-500'
                       : 'text-slate-300 hover:text-white hover:bg-slate-900/60'
-                  } ${link.path === '/admin' ? 'flex items-center text-slate-400 hover:text-blue-400' : ''}`
+                  }`
                 }
               >
-                {link.path === '/admin' && <ShieldCheck className="w-3.5 h-3.5 mr-1" />}
                 {link.name}
               </NavLink>
             ))}
