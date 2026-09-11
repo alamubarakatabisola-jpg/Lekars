@@ -1,0 +1,17 @@
+{
+  "short_name": "Lekarsemir",
+  "name": "Lekarsemir Musical - Instrument Repair & Engineering",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#05070E",
+  "theme_color": "#0A0F1D",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "description": "Professional musical instrument repair, synthesizer calibration, amplifier diagnostics, and pro audio gear."
+}

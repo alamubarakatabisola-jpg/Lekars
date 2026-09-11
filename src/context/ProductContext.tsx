@@ -1,13 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, writeBatch, getDocs 
+} from 'firebase/firestore';
 import type { Product } from '../types';
 import { productsData as defaultProducts } from '../data/products';
+import { db } from '../config/firebase';
 
 interface ProductContextType {
   products: Product[];
-  addProduct: (productData: Omit<Product, 'id'>) => Product;
-  updateProduct: (id: string, productData: Partial<Product>) => void;
-  deleteProduct: (id: string) => void;
-  resetToDefaultProducts: () => void;
+  isLoading: boolean;
+  addProduct: (productData: Omit<Product, 'id'>) => Promise<Product>;
+  updateProduct: (id: string, productData: Partial<Product>) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
+  resetToDefaultProducts: () => Promise<void>;
 }
 
 const PRODUCTS_STORAGE_KEY = 'lekarsemir_musical_products_v1';
@@ -20,52 +25,152 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const saved = localStorage.getItem(PRODUCTS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch (e) {
-      console.error('Failed to load products from localStorage:', e);
+      console.error('Failed to load initial cached products:', e);
     }
     return defaultProducts;
   });
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
-    } catch (e) {
-      console.error('Failed to save products to localStorage:', e);
-    }
-  }, [products]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const addProduct = (productData: Omit<Product, 'id'>): Product => {
+  // Real-time Firestore Cloud Database listener
+  useEffect(() => {
+    const productsRef = collection(db, 'products');
+
+    const unsubscribe = onSnapshot(
+      productsRef,
+      async (snapshot) => {
+        if (snapshot.empty) {
+          console.log('Firestore products collection is empty. Auto-seeding initial products...');
+          await autoSeedFirestore();
+        } else {
+          const cloudProducts: Product[] = [];
+          snapshot.forEach((docSnapshot) => {
+            cloudProducts.push({
+              ...(docSnapshot.data() as Product),
+              id: docSnapshot.id,
+            });
+          });
+
+          setProducts(cloudProducts);
+          try {
+            localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(cloudProducts));
+          } catch (e) {
+            console.error('Failed to update localStorage cache:', e);
+          }
+        }
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error('Firestore realtime subscription error:', error);
+        setIsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // Auto-seed Firestore with default products when first initialized
+  const autoSeedFirestore = async () => {
+    try {
+      const batch = writeBatch(db);
+      defaultProducts.forEach((prod) => {
+        const docRef = doc(db, 'products', prod.id);
+        batch.set(docRef, prod);
+      });
+      await batch.commit();
+      console.log('Firestore products collection auto-seeded successfully.');
+    } catch (err) {
+      console.error('Error auto-seeding Firestore:', err);
+    }
+  };
+
+  const addProduct = async (productData: Omit<Product, 'id'>): Promise<Product> => {
+    const newId = `prod-${Date.now()}`;
     const newProduct: Product = {
       ...productData,
-      id: `prod-${Date.now()}`,
+      id: newId,
     };
+
+    // Optimistic local update
     setProducts((prev) => [newProduct, ...prev]);
+
+    // Firestore Cloud write
+    try {
+      const docRef = doc(db, 'products', newId);
+      await setDoc(docRef, newProduct);
+    } catch (err) {
+      console.error('Error adding product to Firestore:', err);
+      throw err;
+    }
+
     return newProduct;
   };
 
-  const updateProduct = (id: string, updatedFields: Partial<Product>) => {
+  const updateProduct = async (id: string, updatedFields: Partial<Product>): Promise<void> => {
+    // Optimistic local update
     setProducts((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...updatedFields } : item))
     );
+
+    // Firestore Cloud update
+    try {
+      const docRef = doc(db, 'products', id);
+      await updateDoc(docRef, updatedFields);
+    } catch (err) {
+      console.error('Error updating product in Firestore:', err);
+      throw err;
+    }
   };
 
-  const deleteProduct = (id: string) => {
+  const deleteProduct = async (id: string): Promise<void> => {
+    // Optimistic local delete
     setProducts((prev) => prev.filter((item) => item.id !== id));
+
+    // Firestore Cloud delete
+    try {
+      const docRef = doc(db, 'products', id);
+      await deleteDoc(docRef);
+    } catch (err) {
+      console.error('Error deleting product from Firestore:', err);
+      throw err;
+    }
   };
 
-  const resetToDefaultProducts = () => {
-    setProducts(defaultProducts);
-    localStorage.removeItem(PRODUCTS_STORAGE_KEY);
+  const resetToDefaultProducts = async (): Promise<void> => {
+    setIsLoading(true);
+    try {
+      // Clear existing Firestore documents
+      const snapshot = await getDocs(collection(db, 'products'));
+      const batch = writeBatch(db);
+      snapshot.forEach((docSnap) => {
+        batch.delete(docSnap.ref);
+      });
+
+      // Re-populate default products
+      defaultProducts.forEach((prod) => {
+        const docRef = doc(db, 'products', prod.id);
+        batch.set(docRef, prod);
+      });
+
+      await batch.commit();
+      setProducts(defaultProducts);
+      localStorage.removeItem(PRODUCTS_STORAGE_KEY);
+    } catch (err) {
+      console.error('Error resetting products catalog in Firestore:', err);
+      setProducts(defaultProducts);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <ProductContext.Provider
       value={{
         products,
+        isLoading,
         addProduct,
         updateProduct,
         deleteProduct,
