@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, Edit3, Trash2, ShieldCheck, Lock, LogOut, Search, 
-  Tag, CheckCircle2, XCircle, RefreshCw, AlertTriangle, Check 
+  Tag, CheckCircle2, XCircle, RefreshCw, AlertTriangle, Check, Eye, EyeOff,
+  UploadCloud, Loader2
 } from 'lucide-react';
 import type { Product } from '../types';
 import { useProducts } from '../hooks/useProducts';
 import { businessConfig } from '../config/businessConfig';
 import { formatNaira } from '../utils/whatsapp';
+import { uploadToCloudinary } from '../utils/cloudinary';
 
 export const Admin: React.FC = () => {
   const { products, addProduct, updateProduct, deleteProduct, resetToDefaultProducts } = useProducts();
@@ -28,6 +30,7 @@ export const Admin: React.FC = () => {
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Form Fields
   const [formData, setFormData] = useState<{
@@ -47,6 +50,22 @@ export const Admin: React.FC = () => {
     available: true,
     featuresText: '',
   });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const url = await uploadToCloudinary(file);
+      setFormData((prev) => ({ ...prev, image: url }));
+      showFeedback('Image uploaded to Cloudinary successfully!', 'success');
+    } catch (err: any) {
+      showFeedback(err.message || 'Image upload failed. Please try again.', 'error');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     document.title = "Admin Portal | Lekarsemir Musical";
@@ -215,7 +234,7 @@ export const Admin: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-20">
-      
+
       {/* Admin Top Header Banner */}
       <header className="bg-slate-900 border-b border-slate-800 sticky top-20 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -266,9 +285,8 @@ export const Admin: React.FC = () => {
       {feedbackMsg && (
         <div className="fixed bottom-6 right-6 z-50 animate-bounce">
           <div
-            className={`px-5 py-3 rounded-xl shadow-2xl text-xs font-bold flex items-center space-x-2 ${
-              feedbackMsg.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
-            }`}
+            className={`px-5 py-3 rounded-xl shadow-2xl text-xs font-bold flex items-center space-x-2 ${feedbackMsg.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
+              }`}
           >
             <Check className="w-4 h-4" />
             <span>{feedbackMsg.text}</span>
@@ -278,7 +296,7 @@ export const Admin: React.FC = () => {
 
       {/* Main Admin Dashboard Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
+
         {/* Metric Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-1">
@@ -319,11 +337,10 @@ export const Admin: React.FC = () => {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
-                  selectedCategory === cat
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${selectedCategory === cat
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
               >
                 {cat}
               </button>
@@ -348,7 +365,7 @@ export const Admin: React.FC = () => {
                 {filteredProducts.length > 0 ? (
                   filteredProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-slate-800/40 transition-colors">
-                      
+
                       {/* Product details */}
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-4">
@@ -441,7 +458,7 @@ export const Admin: React.FC = () => {
 
             <form onSubmit={handleFormSubmit} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
+
                 {/* Product Name */}
                 <div>
                   <label htmlFor="prodName" className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
@@ -516,26 +533,69 @@ export const Admin: React.FC = () => {
 
               </div>
 
-              {/* Image URL with Preview */}
-              <div>
-                <label htmlFor="prodImage" className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
-                  Product Image URL
+              {/* Product Image: Cloudinary Direct Upload + URL Input */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Product Image (Cloudinary Upload or Direct URL)
                 </label>
+
+                {/* Cloudinary File Upload Button */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <label
+                    htmlFor="cloudinary-upload"
+                    className={`inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-blue-500/40 text-xs font-bold cursor-pointer transition-all ${
+                      isUploadingImage
+                        ? 'bg-blue-950/60 text-blue-300 animate-pulse'
+                        : 'bg-blue-600 hover:bg-blue-500 text-white shadow-md'
+                    }`}
+                  >
+                    {isUploadingImage ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin text-blue-300" />
+                        Uploading to Cloudinary...
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud className="w-4 h-4 mr-2" />
+                        Upload Image File to Cloudinary
+                      </>
+                    )}
+                  </label>
+                  <input
+                    type="file"
+                    id="cloudinary-upload"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    disabled={isUploadingImage}
+                    className="hidden"
+                  />
+
+                  <span className="text-[11px] text-slate-500 text-center sm:text-left">or paste image URL below:</span>
+                </div>
+
+                {/* Direct URL input & Preview */}
                 <div className="flex items-center space-x-3">
                   <input
                     type="url"
                     id="prodImage"
                     value={formData.image}
                     onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    placeholder="https://images.unsplash.com/..."
+                    placeholder="https://res.cloudinary.com/dbbsvb9b5/..."
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                   {formData.image && (
-                    <img
-                      src={formData.image}
-                      alt="Preview"
-                      className="w-10 h-10 object-cover rounded-lg bg-slate-950 border border-slate-800 shrink-0"
-                    />
+                    <div className="relative group shrink-0">
+                      <img
+                        src={formData.image}
+                        alt="Preview"
+                        className="w-12 h-12 object-cover rounded-xl bg-slate-950 border border-slate-700"
+                      />
+                      {formData.image.includes('cloudinary') && (
+                        <span className="absolute -bottom-1 -right-1 bg-emerald-500 text-slate-950 text-[9px] font-extrabold px-1 rounded shadow">
+                          Cloud
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
