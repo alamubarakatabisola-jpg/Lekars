@@ -13,6 +13,7 @@ interface ProductContextType {
   updateProduct: (id: string, productData: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   resetToDefaultProducts: () => Promise<void>;
+  clearAllProducts: () => Promise<void>;
 }
 
 const PRODUCTS_STORAGE_KEY = 'lekarsemir_musical_products_v1';
@@ -41,16 +42,20 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const unsubscribe = onSnapshot(
       productsRef,
-      async (snapshot) => {
+      (snapshot) => {
         if (snapshot.empty) {
-          console.log('Firestore products collection is empty. Auto-seeding initial products...');
-          await autoSeedFirestore();
+          // Empty catalog — stay empty, let the admin add products manually
+          setProducts([]);
+          localStorage.removeItem(PRODUCTS_STORAGE_KEY);
         } else {
           const cloudProducts: Product[] = [];
           snapshot.forEach((docSnapshot) => {
+            const data = docSnapshot.data() as Product;
             cloudProducts.push({
-              ...(docSnapshot.data() as Product),
+              ...data,
               id: docSnapshot.id,
+              // Derive available from stockQty automatically
+              available: (data.stockQty ?? 1) > 0,
             });
           });
 
@@ -72,20 +77,6 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return () => unsubscribe();
   }, []);
 
-  // Auto-seed Firestore with default products when first initialized
-  const autoSeedFirestore = async () => {
-    try {
-      const batch = writeBatch(db);
-      defaultProducts.forEach((prod) => {
-        const docRef = doc(db, 'products', prod.id);
-        batch.set(docRef, prod);
-      });
-      await batch.commit();
-      console.log('Firestore products collection auto-seeded successfully.');
-    } catch (err) {
-      console.error('Error auto-seeding Firestore:', err);
-    }
-  };
 
   const addProduct = async (productData: Omit<Product, 'id'>): Promise<Product> => {
     const newId = `prod-${Date.now()}`;
@@ -142,25 +133,39 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const resetToDefaultProducts = async (): Promise<void> => {
     setIsLoading(true);
     try {
-      // Clear existing Firestore documents
       const snapshot = await getDocs(collection(db, 'products'));
       const batch = writeBatch(db);
       snapshot.forEach((docSnap) => {
         batch.delete(docSnap.ref);
       });
-
-      // Re-populate default products
       defaultProducts.forEach((prod) => {
         const docRef = doc(db, 'products', prod.id);
         batch.set(docRef, prod);
       });
-
       await batch.commit();
       setProducts(defaultProducts);
       localStorage.removeItem(PRODUCTS_STORAGE_KEY);
     } catch (err) {
       console.error('Error resetting products catalog in Firestore:', err);
       setProducts(defaultProducts);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const clearAllProducts = async (): Promise<void> => {
+    setIsLoading(true);
+    try {
+      const snapshot = await getDocs(collection(db, 'products'));
+      const batch = writeBatch(db);
+      snapshot.forEach((docSnap) => {
+        batch.delete(docSnap.ref);
+      });
+      await batch.commit();
+      setProducts([]);
+      localStorage.removeItem(PRODUCTS_STORAGE_KEY);
+    } catch (err) {
+      console.error('Error clearing all products from Firestore:', err);
     } finally {
       setIsLoading(false);
     }
@@ -175,6 +180,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updateProduct,
         deleteProduct,
         resetToDefaultProducts,
+        clearAllProducts,
       }}
     >
       {children}

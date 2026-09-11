@@ -9,6 +9,7 @@ export const productsData: Product[] = [
     image: 'https://images.unsplash.com/photo-1564186763535-ebb21ef5277f?q=80&w=800&auto=format&fit=crop',
     category: 'Guitar',
     available: true,
+    stockQty: 5,
     features: [
       'Dual Custom Humbucker Pickups',
       'Solid Mahogany Body with Flame Maple Veneer',
@@ -24,6 +25,7 @@ export const productsData: Product[] = [
     image: 'https://images.unsplash.com/photo-1525201548942-d8732f6617a0?q=80&w=800&auto=format&fit=crop',
     category: 'Guitar',
     available: true,
+    stockQty: 4,
     features: [
       'Solid Sitka Spruce Top',
       'Integrated Preamp & Tuner',
@@ -39,6 +41,7 @@ export const productsData: Product[] = [
     image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=800&auto=format&fit=crop',
     category: 'Keyboard & Piano',
     available: true,
+    stockQty: 2,
     features: [
       '88 Graded Hammer Action Keys',
       'Seamless Sound Transition Technology',
@@ -54,6 +57,7 @@ export const productsData: Product[] = [
     image: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=800&auto=format&fit=crop',
     category: 'Microphones',
     available: true,
+    stockQty: 6,
     features: [
       '1-inch Gold-Sputtered Capsule',
       'Cardioid Polar Pattern',
@@ -69,6 +73,7 @@ export const productsData: Product[] = [
     image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=800&auto=format&fit=crop',
     category: 'Accessories',
     available: true,
+    stockQty: 3,
     features: [
       '45mm Large-Aperture Drivers',
       'Open-Back Acoustic Design',
@@ -84,6 +89,7 @@ export const productsData: Product[] = [
     image: 'https://images.unsplash.com/photo-1598653222000-6b7b7a552625?q=80&w=800&auto=format&fit=crop',
     category: 'Audio Equipment',
     available: true,
+    stockQty: 7,
     features: [
       'Dual Pro-Grade Microphone Preamps',
       '24-bit / 192 kHz AD/DA Converters',
@@ -99,6 +105,7 @@ export const productsData: Product[] = [
     image: 'https://images.unsplash.com/photo-1516223725307-6f76b9ec8742?q=80&w=800&auto=format&fit=crop',
     category: 'Audio Equipment',
     available: true,
+    stockQty: 1,
     features: [
       '16 Hybrid XLR/TRS Channels',
       '3-Band Parametric Mid EQ',
@@ -114,6 +121,7 @@ export const productsData: Product[] = [
     image: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?q=80&w=800&auto=format&fit=crop',
     category: 'Audio Equipment',
     available: true,
+    stockQty: 3,
     features: [
       '140-Watt Class AB Bi-Amplified Design',
       '8-inch Kevlar Low-Frequency Woofer',
@@ -129,6 +137,7 @@ export const productsData: Product[] = [
     image: 'https://images.unsplash.com/photo-1558098329-a11cff621064?q=80&w=800&auto=format&fit=crop',
     category: 'Guitar',
     available: true,
+    stockQty: 2,
     features: [
       '12-inch Celestion Vintage Speaker',
       'Dual Channel (Clean & Lead Overdrive)',
@@ -144,6 +153,7 @@ export const productsData: Product[] = [
     image: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?q=80&w=800&auto=format&fit=crop',
     category: 'Accessories',
     available: true,
+    stockQty: 10,
     features: [
       'Solid Metal Tripod Base',
       'Telescoping Adjustable Boom Arm',
@@ -159,6 +169,7 @@ export const productsData: Product[] = [
     image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=800&auto=format&fit=crop',
     category: 'Accessories',
     available: true,
+    stockQty: 15,
     features: [
       '99.99% Oxygen-Free Copper Conductors',
       'High-Density Braided Shielding',
@@ -174,6 +185,7 @@ export const productsData: Product[] = [
     image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=800&auto=format&fit=crop',
     category: 'Accessories',
     available: true,
+    stockQty: 0,
     features: [
       'Light Gauge (.010 - .046)',
       'Corrosion Resistant Hermetic Packaging',

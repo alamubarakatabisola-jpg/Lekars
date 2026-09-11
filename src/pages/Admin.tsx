@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Plus, Edit3, Trash2, ShieldCheck, Lock, LogOut, Search, 
-  Tag, CheckCircle2, XCircle, RefreshCw, AlertTriangle, Check, Eye, EyeOff,
+  Plus, Edit3, Trash2, ShieldCheck, Lock, LogOut, Search,
+  Tag, CheckCircle2, XCircle, RefreshCw, AlertTriangle, Check,
   UploadCloud, Loader2
 } from 'lucide-react';
 import type { Product } from '../types';
@@ -11,7 +11,7 @@ import { formatNaira } from '../utils/whatsapp';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 export const Admin: React.FC = () => {
-  const { products, addProduct, updateProduct, deleteProduct, resetToDefaultProducts } = useProducts();
+  const { products, addProduct, updateProduct, deleteProduct, resetToDefaultProducts, clearAllProducts } = useProducts();
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -29,6 +29,7 @@ export const Admin: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [isClearAllConfirmOpen, setIsClearAllConfirmOpen] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
@@ -40,6 +41,7 @@ export const Admin: React.FC = () => {
     image: string;
     category: Product['category'];
     available: boolean;
+    stockQty: number;
     featuresText: string;
   }>({
     name: '',
@@ -48,6 +50,7 @@ export const Admin: React.FC = () => {
     image: '',
     category: 'Guitar',
     available: true,
+    stockQty: 1,
     featuresText: '',
   });
 
@@ -96,6 +99,7 @@ export const Admin: React.FC = () => {
       image: 'https://images.unsplash.com/photo-1564186763535-ebb21ef5277f?q=80&w=800&auto=format&fit=crop',
       category: 'Guitar',
       available: true,
+      stockQty: 1,
       featuresText: 'High Build Quality, Studio Calibrated',
     });
     setIsFormOpen(true);
@@ -110,6 +114,7 @@ export const Admin: React.FC = () => {
       image: product.image,
       category: product.category,
       available: product.available,
+      stockQty: product.stockQty ?? 0,
       featuresText: product.features ? product.features.join(', ') : '',
     });
     setIsFormOpen(true);
@@ -133,7 +138,8 @@ export const Admin: React.FC = () => {
         price: Number(formData.price),
         image: formData.image || 'https://images.unsplash.com/photo-1564186763535-ebb21ef5277f?q=80&w=800&auto=format&fit=crop',
         category: formData.category,
-        available: formData.available,
+        available: formData.stockQty > 0 ? formData.available : false,
+        stockQty: Number(formData.stockQty),
         features: featuresArray,
       });
       showFeedback('Product updated successfully!');
@@ -144,7 +150,8 @@ export const Admin: React.FC = () => {
         price: Number(formData.price),
         image: formData.image || 'https://images.unsplash.com/photo-1564186763535-ebb21ef5277f?q=80&w=800&auto=format&fit=crop',
         category: formData.category,
-        available: formData.available,
+        available: formData.stockQty > 0,
+        stockQty: Number(formData.stockQty),
         features: featuresArray,
       });
       showFeedback('New product added to catalog!');
@@ -163,6 +170,12 @@ export const Admin: React.FC = () => {
     resetToDefaultProducts();
     setIsResetConfirmOpen(false);
     showFeedback('Product catalog restored to factory default list.');
+  };
+
+  const handleClearAll = async () => {
+    await clearAllProducts();
+    setIsClearAllConfirmOpen(false);
+    showFeedback('All products cleared from Firestore. Add your own products now!', 'success');
   };
 
   const showFeedback = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -262,6 +275,15 @@ export const Admin: React.FC = () => {
             </button>
 
             <button
+              onClick={() => setIsClearAllConfirmOpen(true)}
+              className="inline-flex items-center px-3.5 py-2.5 rounded-xl bg-red-950 hover:bg-red-900 text-red-400 hover:text-red-300 font-semibold text-xs border border-red-800/60 transition-colors"
+              title="Delete ALL products from Firestore permanently"
+            >
+              <Trash2 className="w-3.5 h-3.5 mr-1" />
+              Clear All
+            </button>
+
+            <button
               onClick={() => setIsResetConfirmOpen(true)}
               className="inline-flex items-center px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition-colors"
               title="Reset products to default sample catalog"
@@ -298,16 +320,23 @@ export const Admin: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
         {/* Metric Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
           <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-1">
             <span className="text-xs uppercase tracking-wider font-bold text-slate-400">Total Products</span>
             <p className="text-3xl font-extrabold text-white">{products.length}</p>
           </div>
 
           <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-1">
-            <span className="text-xs uppercase tracking-wider font-bold text-emerald-400">In Stock Products</span>
+            <span className="text-xs uppercase tracking-wider font-bold text-emerald-400">In Stock</span>
             <p className="text-3xl font-extrabold text-emerald-400">
-              {products.filter((p) => p.available).length}
+              {products.filter((p) => p.stockQty > 0).length}
+            </p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-1">
+            <span className="text-xs uppercase tracking-wider font-bold text-red-400">Out of Stock</span>
+            <p className="text-3xl font-extrabold text-red-400">
+              {products.filter((p) => p.stockQty === 0).length}
             </p>
           </div>
 
@@ -357,6 +386,7 @@ export const Admin: React.FC = () => {
                   <th className="py-4 px-6">Product</th>
                   <th className="py-4 px-4">Category</th>
                   <th className="py-4 px-4">Price (₦)</th>
+                  <th className="py-4 px-4">Stock Qty</th>
                   <th className="py-4 px-4">Status</th>
                   <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
@@ -394,9 +424,22 @@ export const Admin: React.FC = () => {
                         {formatNaira(product.price)}
                       </td>
 
+                      {/* Stock Qty */}
+                      <td className="py-4 px-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md font-bold text-sm ${
+                          product.stockQty === 0
+                            ? 'bg-red-950/80 text-red-400 border border-red-800/60'
+                            : product.stockQty <= 3
+                            ? 'bg-amber-950/80 text-amber-400 border border-amber-800/60'
+                            : 'bg-slate-950 text-slate-300 border border-slate-800'
+                        }`}>
+                          {product.stockQty}
+                        </span>
+                      </td>
+
                       {/* Status */}
                       <td className="py-4 px-4">
-                        {product.available ? (
+                        {product.stockQty > 0 ? (
                           <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 font-semibold">
                             <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> In Stock
                           </span>
@@ -427,7 +470,7 @@ export const Admin: React.FC = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-slate-500 font-medium">
+                    <td colSpan={6} className="py-12 text-center text-slate-500 font-medium">
                       No products match your filter criteria.
                     </td>
                   </tr>
@@ -512,23 +555,30 @@ export const Admin: React.FC = () => {
                   />
                 </div>
 
-                {/* Availability Toggle */}
+                {/* Stock Quantity */}
                 <div>
-                  <label htmlFor="prodAvailable" className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
-                    Stock Availability
+                  <label htmlFor="prodStock" className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+                    Stock Quantity <span className="text-red-400">*</span>
                   </label>
-                  <div className="flex items-center space-x-3 pt-2">
-                    <input
-                      type="checkbox"
-                      id="prodAvailable"
-                      checked={formData.available}
-                      onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
-                      className="w-5 h-5 rounded bg-slate-950 border-slate-800 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-xs font-semibold text-slate-300">
-                      {formData.available ? 'Available (In Stock)' : 'Out of Stock'}
-                    </span>
-                  </div>
+                  <input
+                    type="number"
+                    id="prodStock"
+                    value={formData.stockQty}
+                    onChange={(e) => setFormData({ ...formData, stockQty: Number(e.target.value) })}
+                    placeholder="e.g. 5"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    min="0"
+                    required
+                  />
+                  <p className={`text-[11px] mt-1 font-semibold ${
+                    formData.stockQty === 0 ? 'text-red-400' : formData.stockQty <= 3 ? 'text-amber-400' : 'text-emerald-400'
+                  }`}>
+                    {formData.stockQty === 0
+                      ? '⚠ Product will be marked Out of Stock'
+                      : formData.stockQty <= 3
+                      ? `⚠ Low stock — only ${formData.stockQty} unit(s) remaining`
+                      : `✓ ${formData.stockQty} units available`}
+                  </p>
                 </div>
 
               </div>
@@ -704,6 +754,38 @@ export const Admin: React.FC = () => {
                 className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold"
               >
                 Reset Products
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CLEAR ALL PRODUCTS CONFIRMATION MODAL */}
+      {isClearAllConfirmOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-red-800/60 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-red-950 border border-red-700 text-red-400 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-7 h-7" />
+            </div>
+            <h3 className="text-xl font-bold text-white">Delete ALL Products?</h3>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              This will <span className="text-red-400 font-bold">permanently delete every product</span> from Firestore and clear the local cache.
+              The shop will be empty. You can then add your own products manually. <br /><br />
+              <span className="text-amber-400 font-semibold">This cannot be undone.</span>
+            </p>
+            <div className="flex justify-center space-x-3 pt-2">
+              <button
+                onClick={() => setIsClearAllConfirmOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearAll}
+                className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center"
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                Yes, Delete All Products
               </button>
             </div>
           </div>

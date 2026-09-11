@@ -6,6 +6,7 @@ export interface Product {
   image: string;
   category: 'Guitar' | 'Keyboard & Piano' | 'Audio Equipment' | 'Microphones' | 'Drums & Percussion' | 'Accessories';
   available: boolean;
+  stockQty: number;   // 0 = Out of Stock
   features?: string[];
   specs?: Record<string, string>;
 }
