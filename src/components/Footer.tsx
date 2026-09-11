@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Wrench, Phone, Mail, MapPin, Clock, MessageSquare, Video } from 'lucide-react';
+import { Wrench, Phone, Mail, MapPin, Clock, MessageSquare, Video, ShieldCheck } from 'lucide-react';
 import { businessConfig } from '../config/businessConfig';
 import { generateWhatsAppLink } from '../utils/whatsapp';
 
@@ -77,6 +77,11 @@ export const Footer: React.FC = () => {
                   <span className="text-blue-500 mr-2">›</span> Contact Us
                 </Link>
               </li>
+              <li>
+                <Link to="/admin" className="hover:text-blue-400 transition-colors flex items-center text-slate-400">
+                  <ShieldCheck className="w-4 h-4 text-blue-500 mr-1.5" /> Admin Portal
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -108,7 +113,7 @@ export const Footer: React.FC = () => {
               <li className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-blue-500 shrink-0" />
                 <a href={`tel:${businessConfig.phoneNumber}`} className="hover:text-white transition-colors">
-                  {businessConfig.phoneNumber}
+                  {businessConfig.displayWhatsApp}
                 </a>
               </li>
               <li className="flex items-center space-x-3">

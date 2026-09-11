@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Wrench, MessageSquare } from 'lucide-react';
+import { ShoppingCart, Menu, X, Wrench, MessageSquare, ShieldCheck } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { businessConfig } from '../config/businessConfig';
 import { generateWhatsAppLink } from '../utils/whatsapp';
@@ -17,6 +17,7 @@ export const Navbar: React.FC = () => {
     { name: 'Services', path: '/services' },
     { name: 'Shop', path: '/shop' },
     { name: 'Contact', path: '/contact' },
+    { name: 'Admin', path: '/admin' },
   ];
 
   const defaultWhatsAppUrl = generateWhatsAppLink(
@@ -53,13 +54,14 @@ export const Navbar: React.FC = () => {
                 key={link.path}
                 to={link.path}
                 className={({ isActive }) =>
-                  `px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  `px-3 py-2 rounded-md text-xs font-semibold transition-colors ${
                     isActive
                       ? 'text-blue-400 bg-slate-900 border-b-2 border-blue-500'
                       : 'text-slate-300 hover:text-white hover:bg-slate-900/60'
-                  }`
+                  } ${link.path === '/admin' ? 'flex items-center text-slate-400 hover:text-blue-400' : ''}`
                 }
               >
+                {link.path === '/admin' && <ShieldCheck className="w-3.5 h-3.5 mr-1" />}
                 {link.name}
               </NavLink>
             ))}
@@ -84,7 +86,7 @@ export const Navbar: React.FC = () => {
               href={defaultWhatsAppUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-lg shadow-emerald-600/20 transition-all duration-200"
+              className="inline-flex items-center px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all duration-200"
             >
               <MessageSquare className="w-4 h-4 mr-2 fill-current" />
               Order on WhatsApp

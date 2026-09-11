@@ -9,17 +9,19 @@ import { ServiceCard } from '../components/ServiceCard';
 import { ProductCard } from '../components/ProductCard';
 import { CTASection } from '../components/CTASection';
 import { servicesData } from '../data/services';
-import { productsData } from '../data/products';
+import { useProducts } from '../hooks/useProducts';
 import { businessConfig } from '../config/businessConfig';
 import { generateWhatsAppLink } from '../utils/whatsapp';
 
 export const Home: React.FC = () => {
+  const { products } = useProducts();
+
   useEffect(() => {
     document.title = "Professional Musical Instrument Repair | Lekarsemir Musical";
   }, []);
 
   const featuredServices = servicesData.slice(0, 6);
-  const featuredProducts = productsData.slice(0, 4);
+  const featuredProducts = products.slice(0, 4);
 
   const whatsAppUrl = generateWhatsAppLink(
     `Hello ${businessConfig.businessName}, I am visiting your website and would like to learn more about your services.`

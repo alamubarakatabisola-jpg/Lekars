@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { ShoppingBag, Search, ShieldCheck } from 'lucide-react';
 import { ProductGrid } from '../components/ProductGrid';
-import { productsData } from '../data/products';
+import { useProducts } from '../hooks/useProducts';
 
 export const Shop: React.FC = () => {
+  const { products } = useProducts();
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     document.title = "Musical Equipment Shop | Lekarsemir Musical";
   }, []);
 
-  const filteredProducts = productsData.filter(
+  const filteredProducts = products.filter(
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||

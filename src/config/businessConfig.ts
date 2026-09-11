@@ -11,6 +11,7 @@ export interface BusinessConfig {
   email: string;
   address: string;
   businessHours: string;
+  adminPasscode: string;
   socials: {
     instagram: string;
     facebook: string;
@@ -31,6 +32,7 @@ export const businessConfig: BusinessConfig = {
   email: "contact@lekarsemirmusical.com",
   address: "Suite 104, Technical Sound Plaza, Commercial Avenue, Ikeja, Lagos",
   businessHours: "Monday – Saturday: 8:30 AM – 6:30 PM",
+  adminPasscode: "1234", // Default Admin PIN
   socials: {
     instagram: "https://instagram.com/lekarsemirmusical",
     facebook: "https://facebook.com/lekarsemirmusical",
